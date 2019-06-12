@@ -147,7 +147,7 @@ void writeToClient(SOCKET Clientfd, SOCKET Serverfd) {
 	}
 }
 
-void* datafromclient(SOCKET& sockid)
+int datafromclient(SOCKET& sockid)
 {
 	char buf[reqLEN];
 	char* req_mess; // Get message from URL
@@ -155,7 +155,7 @@ void* datafromclient(SOCKET& sockid)
 	if (req_mess == NULL)
 	{
 		fprintf(stderr, "Error in memory allocation ! \n");
-		exit(1);
+		return -1;
 	}
 
 	req_mess[0] = '\0';
@@ -167,7 +167,7 @@ void* datafromclient(SOCKET& sockid)
 		if (recvd < 0)
 		{
 			fprintf(stderr, "Error while receiving ! \n");
-			exit(1);
+			return -1;
 		}
 		else if (recvd == 0)
 		{
@@ -179,7 +179,7 @@ void* datafromclient(SOCKET& sockid)
 			recvdbits += recvd;
 
 			/* if total message size greater than our string size, double the string size */
-			
+
 			buf[recvd] = '\0';
 			if (recvdbits > MAXLEN)
 			{
@@ -188,7 +188,7 @@ void* datafromclient(SOCKET& sockid)
 				if (req_mess == NULL)
 				{
 					fprintf(stderr, "Error while receiving ! \n");
-					exit(1);
+					return -1;
 				}
 			}
 		}
@@ -199,7 +199,7 @@ void* datafromclient(SOCKET& sockid)
 	if (ParsedRequest_parse(req, req_mess, strlen(req_mess)) < 0)
 	{
 		fprintf(stderr, "Error in request message... only http and get with headers are allowed ! \n");
-		exit(1);
+		return -1;
 	}
 	if (req->port == NULL)
 	{
@@ -219,9 +219,19 @@ void* datafromclient(SOCKET& sockid)
 	//closesocket(sockid);   // close the sockets
 	closesocket(iServerfd);
 
-	int y = 3;
-	int* p = &y;
-	return p;
+	return 0;
+}
+
+DWORD WINAPI function_cal(LPVOID arg)
+{
+	int keycont;
+	SOCKET hConnected = *((SOCKET*)arg);
+	do
+	{
+		keycont = (datafromclient(hConnected));
+	} while (keycont == 0);
+	closesocket(hConnected);
+	return 0;
 }
 
 int main()
@@ -288,6 +298,9 @@ int main()
 	}
 	//
 
+	DWORD threadID;
+	HANDLE threadStatus;
+
 	while (1)
 	{
 		/* A browser request starts here */
@@ -304,6 +317,12 @@ int main()
 		//
 
 		//
+		/*threadStatus = CreateThread(NULL, 0, function_cal, &listenSock, 0, &threadID);
+		if (threadStatus == NULL)
+		{
+			cout << "Thread Creation Failed & Error No --> " << GetLastError() << endl;
+			CloseHandle(threadStatus);
+		}*/
 		datafromclient(clientSock);
 		closesocket(clientSock);
 	}
@@ -311,6 +330,8 @@ int main()
 	WSACleanup();
 	system("pause");
 	return 0;
+}
+
 	//const char* c =
 	//	"GET http://www.google.com:80/index.html/ HTTP/1.0\r\nContent-Length:"
 	//	" 80\r\nIf-Modified-Since: Sat, 29 Oct 1994 19:43:31 GMT\r\n\r\n";
@@ -377,4 +398,25 @@ int main()
 	//// free memory dynamically allocated by the proxy_parse library. 
 	//ParsedRequest_destroy(req);
 	//return 0;
-}
+
+//DWORD WINAPI ThreadFun(LPVOID lpParam)
+//{
+//	int key = *((int*)lpParam);
+//	cout << "Thread " << key << " is running" << endl;
+//	return 0;
+//}
+//
+//int main()
+//{
+//	HANDLE hThread;
+//	DWORD threadID;
+//	int a = 1;
+//	int b = 2;
+//	do
+//	{
+//		hThread = CreateThread(NULL, 0, ThreadFun, &a, 0, &threadID);
+//		b++;
+//	}while (b < 4);
+//	CloseHandle(hThread);
+//	return 0;
+//}

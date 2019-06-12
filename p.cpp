@@ -1,8 +1,3 @@
-/*
-  proxy_parse.c -- a HTTP Request Parsing Library.
-  COS 461
-*/
-
 #include "p.h"
 
 #define DEFAULT_NHDRS 8
@@ -430,6 +425,7 @@ int ParsedRequest_parse(struct ParsedRequest* parse, const char* buf, int buflen
 		return -1;
 	}
 
+
 	parse->protocol = strtok_s(full_addr, "://", &saveptr);
 	if (parse->protocol == NULL) {
 		debug("invalid request line, missing host\n");
@@ -485,7 +481,6 @@ int ParsedRequest_parse(struct ParsedRequest* parse, const char* buf, int buflen
 	}
 
 	parse->host = strtok_s(parse->host, ":", &saveptr);
-	//parse->host = "www.kenh14.vn";
 	parse->port = strtok_s(NULL, "/", &saveptr);
 
 	if (parse->host == NULL) {
